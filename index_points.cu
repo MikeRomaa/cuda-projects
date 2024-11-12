@@ -151,7 +151,7 @@ void process_point_indices(
 	ushort cell_b = cell_indices[index + 1];
 
 	// The index of the first cell needs to be set manually since it isn't paired up with
-        // a previous one.
+	// a previous one.
 	if (index == 0)
 	{
 		out_start[cell_a] = 0;
@@ -208,17 +208,17 @@ int main(int argc, char* argv[])
 
 	thrust::device_vector<Point2D> points(num_points);
 	thrust::transform(thrust::make_counting_iterator(0),
-			  thrust::make_counting_iterator(num_points),
-			  points.begin(),
-			  generate_rand_point());
+			thrust::make_counting_iterator(num_points),
+			points.begin(),
+			generate_rand_point());
 	
 	// Determine the cell index of each point.
 
 	thrust::device_vector<ushort> cell_indices(num_points);
 	thrust::transform(points.begin(),
-			  points.end(),
-			  cell_indices.begin(),
-			  get_cell_idx(grid_size));
+			points.end(),
+			cell_indices.begin(),
+			get_cell_idx(grid_size));
 	
 	// Sort the point vector based on their cell index. This will result in `points` containing
 	// all of the points belonging to cell 0 (if any), then all of the points belonging to
@@ -262,15 +262,15 @@ int main(int argc, char* argv[])
 
 	// Copy the start positions of the non-empty cells.
 	thrust::gather(result_cells.begin(),
-		       result_cells.end(),
-		       start.begin(),
-		       result_start.begin());
+			result_cells.end(),
+			start.begin(),
+			result_start.begin());
 
 	// Copy the lengths of the non-empty cells.
 	thrust::gather(result_cells.begin(),
-		       result_cells.end(),
-		       length.begin(),
-		       result_length.begin());	
+			result_cells.end(),
+			length.begin(),
+			result_length.begin());
 
 	// Print the result out on the host.
 
@@ -284,10 +284,11 @@ int main(int argc, char* argv[])
 	for (std::size_t i = 0; i < h_result_cells.size(); i++)
 	{
 		printf("%-5d %-10ld %-10ld\n",
-		       h_result_cells[i],
-		       h_result_start[i],
-		       h_result_length[i]);
+				h_result_cells[i],
+				h_result_start[i],
+				h_result_length[i]);
 	}
 
 	return EXIT_SUCCESS;
 }
+
