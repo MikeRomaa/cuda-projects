@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <time.h>
+
+#include <pybind11/iostream.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -49,6 +53,12 @@ void distance(
 		py::array_t<double> py_out
 )
 {
+    // Redirect stdout to Python's out stream
+    py::scoped_ostream_redirect stream(
+        std::cout,
+        py::module_::import("sys").attr("stdout")
+    );
+
 	py::buffer_info buf_x1 = py_x1.request();
 	py::buffer_info buf_y1 = py_y1.request();
 	py::buffer_info buf_x2 = py_x2.request();
@@ -74,16 +84,28 @@ void distance(
 	thrust::device_vector<double> d_y2(y2, y2 + size);
 	thrust::device_vector<double> d_out(size);
 
-	// Run the kernel function
 	int blockSize = ceil((float) size / THREADS_PER_BLOCK);
 
-	haversine<<<blockSize, THREADS_PER_BLOCK>>>(
+    // Keep track of time for performance metrics
+    struct timespec start;
+    struct timespec end;
+
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+
+	// Run the kernel function
+    haversine<<<blockSize, THREADS_PER_BLOCK>>>(
 			size,
 			thrust::raw_pointer_cast(d_x1.data()),
 			thrust::raw_pointer_cast(d_y1.data()),
 			thrust::raw_pointer_cast(d_x2.data()),
 			thrust::raw_pointer_cast(d_y2.data()),
 			thrust::raw_pointer_cast(d_out.data()));
+
+    // Output computation time
+    clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+
+    printf("Haversine kernel: %.10f s\n",
+            (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9);
 
 	// Copy the output back to the Python buffer
 	double* out = reinterpret_cast<double*>(buf_out.ptr);
